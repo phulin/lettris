@@ -564,6 +564,22 @@ function App() {
 		return base;
 	});
 
+	const tapColumn = (col: number) => {
+		setGame((current) => {
+			if (
+				current.paused ||
+				current.gameOver ||
+				!current.active ||
+				current.clearingMatches.length > 0
+			)
+				return current;
+
+			if (current.grid[current.active.row][col] !== null) return current;
+
+			return { ...current, active: { ...current.active, col } };
+		});
+	};
+
 	const clearingCells = createMemo(
 		() =>
 			new Set(
@@ -591,7 +607,16 @@ function App() {
 				<span class="last-clear">{game().lastClear || "-"}</span>
 			</div>
 
-			<section class="board" aria-label="Lettris board">
+			<section
+				class="board"
+				aria-label="Lettris board"
+				onClick={(e) => {
+					const rect = e.currentTarget.getBoundingClientRect();
+					const col = Math.floor(((e.clientX - rect.left) / rect.width) * WIDTH);
+					tapColumn(Math.max(0, Math.min(WIDTH - 1, col)));
+				}}
+				onKeyDown={() => {}}
+			>
 				<For each={visibleGrid()}>
 					{(row, rowIndex) => (
 						<For each={row}>
