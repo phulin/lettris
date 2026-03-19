@@ -50,12 +50,27 @@
 	cursor: pointer;
 }
 
+@media (max-width: 480px) {
+	.topbar h1 {
+		display: none;
+	}
+
+	.topbar .stats {
+		grid-column: 1 / -1;
+	}
+
+	.topbar .stats button {
+		flex: 1;
+	}
+}
+
 .status {
-	grid-template-columns: 64px 1fr;
+	grid-template-columns: repeat(3, 64px) 1fr;
 	margin-bottom: 8px;
 }
 
 .board {
+	position: relative;
 	display: grid;
 	grid-template-columns: repeat(6, 1fr);
 	gap: 4px;
@@ -136,7 +151,7 @@
 .overlay,
 .gameover {
 	position: absolute;
-	inset: 96px 0 24px;
+	inset: 0;
 	display: grid;
 	place-items: center;
 	font-size: 1.8rem;
@@ -146,10 +161,6 @@
 	color: #fff;
 	pointer-events: none;
 	z-index: 2;
-}
-
-.gameover {
-	margin-top: 0;
 }
 
 @keyframes clear-flash {

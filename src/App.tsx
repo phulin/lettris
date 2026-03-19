@@ -10,7 +10,7 @@ import wordsText from "./words.txt?raw";
 import "./App.css";
 
 const WIDTH = 6;
-const HEIGHT = 12;
+const HEIGHT = 10;
 const TICK_MS = 350;
 const CLEAR_MS = 420;
 const MIN_WORD_LENGTH = 3;
@@ -58,6 +58,7 @@ type CandidateMatch = {
 type GameState = {
 	grid: Cell[][];
 	active: ActivePiece | null;
+	queue: string[];
 	letterCounts: LetterCounts;
 	totalLettersSpawned: number;
 	score: number;
@@ -112,18 +113,22 @@ const spawnPiece = (
 	grid: Cell[][],
 	letterCounts: LetterCounts,
 	totalLettersSpawned: number,
+	queue: string[],
 ): {
 	active: ActivePiece | null;
+	queue: string[];
 	letterCounts: LetterCounts;
 	totalLettersSpawned: number;
 } => {
 	const col = Math.floor(WIDTH / 2);
 
 	if (grid[0][col] !== null) {
-		return { active: null, letterCounts, totalLettersSpawned };
+		return { active: null, queue, letterCounts, totalLettersSpawned };
 	}
 
-	const letter = pickBalancedLetter(letterCounts, totalLettersSpawned);
+	const letter = queue[0];
+	const newLetter = pickBalancedLetter(letterCounts, totalLettersSpawned);
+	const nextQueue = [...queue.slice(1), newLetter];
 	const nextLetterCounts = {
 		...letterCounts,
 		[letter]: (letterCounts[letter] ?? 0) + 1,
@@ -135,6 +140,7 @@ const spawnPiece = (
 			row: 0,
 			col,
 		},
+		queue: nextQueue,
 		letterCounts: nextLetterCounts,
 		totalLettersSpawned: totalLettersSpawned + 1,
 	};
@@ -142,11 +148,16 @@ const spawnPiece = (
 
 const createGame = (): GameState => {
 	const grid = emptyGrid();
-	const spawn = spawnPiece(grid, emptyLetterCounts(), 0);
+	const initialCounts = emptyLetterCounts();
+	const initialQueue = Array.from({ length: 3 }, (_, i) =>
+		pickBalancedLetter(initialCounts, i),
+	);
+	const spawn = spawnPiece(grid, initialCounts, 0, initialQueue);
 
 	return {
 		grid,
 		active: spawn.active,
+		queue: spawn.queue,
 		letterCounts: spawn.letterCounts,
 		totalLettersSpawned: spawn.totalLettersSpawned,
 		score: 0,
@@ -339,12 +350,14 @@ const queueMatches = (
 			grid,
 			state.letterCounts,
 			state.totalLettersSpawned,
+			state.queue,
 		);
 
 		return {
 			...state,
 			grid,
 			active: spawn.active,
+			queue: spawn.queue,
 			letterCounts: spawn.letterCounts,
 			totalLettersSpawned: spawn.totalLettersSpawned,
 			clearingMatches: [],
@@ -574,8 +587,8 @@ function App() {
 			</header>
 
 			<div class="status">
-				<span>{game().active?.letter ?? "-"}</span>
-				<span>{game().lastClear || "-"}</span>
+				<For each={game().queue}>{(letter) => <span>{letter}</span>}</For>
+				<span class="last-clear">{game().lastClear || "-"}</span>
 			</div>
 
 			<section class="board" aria-label="Lettris board">
@@ -601,10 +614,9 @@ function App() {
 						</For>
 					)}
 				</For>
-			</section>
-
-			{game().paused && !game().gameOver && <div class="overlay">PAUSED</div>}
+				{game().paused && !game().gameOver && <div class="overlay">PAUSED</div>}
 			{game().gameOver && <div class="gameover">GAME OVER</div>}
+		</section>
 		</main>
 	);
 }
