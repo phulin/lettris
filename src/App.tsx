@@ -12,6 +12,8 @@ import "./App.css";
 const WIDTH = 6;
 const HEIGHT = 10;
 const TICK_MS = 350;
+const MIN_TICK_MS = 75;
+const ACCEL_MS = 5;
 const CLEAR_MS = 420;
 const MIN_WORD_LENGTH = 3;
 const DICTIONARY = wordsText
@@ -460,6 +462,9 @@ function App() {
 		Number(localStorage.getItem("highScore") ?? 0),
 	);
 	const [isNewHighScore, setIsNewHighScore] = createSignal(false);
+	const tickMs = createMemo(() =>
+		Math.max(MIN_TICK_MS, TICK_MS - game().clears * ACCEL_MS),
+	);
 
 	onMount(() => {
 		let clearTimeout: number | undefined;
@@ -512,9 +517,13 @@ function App() {
 			});
 		};
 
-		const interval = window.setInterval(() => {
-			setGame((current) => stepGame(current));
-		}, TICK_MS);
+		createEffect(() => {
+			const ms = tickMs();
+			const interval = window.setInterval(() => {
+				setGame((current) => stepGame(current));
+			}, ms);
+			onCleanup(() => window.clearInterval(interval));
+		});
 
 		const autoPause = () => {
 			setGame((current) => {
@@ -550,7 +559,6 @@ function App() {
 			window.removeEventListener("keydown", onKeyDown);
 			window.removeEventListener("blur", autoPause);
 			document.removeEventListener("visibilitychange", onVisibilityChange);
-			window.clearInterval(interval);
 			if (clearTimeout) {
 				window.clearTimeout(clearTimeout);
 			}
