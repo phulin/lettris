@@ -91,7 +91,7 @@ const pickBalancedLetter = (
 
 		return {
 			letter,
-			weight: Math.max(0.25, expectedCount - actualCount + 1),
+			weight: Math.max(0.25, 3 * (expectedCount - actualCount) + 1),
 		};
 	});
 
