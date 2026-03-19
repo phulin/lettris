@@ -654,7 +654,15 @@ function App() {
 						</For>
 					)}
 				</For>
-				{game().paused && !game().gameOver && <div class="overlay">PAUSED</div>}
+				{game().paused && !game().gameOver && (
+				<button
+					class="overlay"
+					type="button"
+					onClick={() => setGame((c) => ({ ...c, paused: false }))}
+				>
+					PAUSED
+				</button>
+			)}
 			{game().gameOver && (
 				<div class="gameover">
 					<span>GAME OVER</span>
