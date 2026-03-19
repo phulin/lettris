@@ -1,22 +1,22 @@
 :root {
-  font-family: Arial, sans-serif;
-  color: #111;
-  background: #d8d8d8;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+	font-family: Arial, sans-serif;
+	color: #111;
+	background: #d8d8d8;
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 * {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
+	margin: 0;
+	min-height: 100vh;
 }
 
 button {
-  font: inherit;
+	font: inherit;
 }
