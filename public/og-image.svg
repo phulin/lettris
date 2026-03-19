@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="block" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#b87fff"/>
+      <stop offset="45%" stop-color="#863bff"/>
+      <stop offset="100%" stop-color="#4f1aad"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#160928"/>
+      <stop offset="100%" stop-color="#0a0414"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle grid dots -->
+  <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+    <circle cx="20" cy="20" r="1.5" fill="#2a1550" opacity="0.7"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+
+  <!-- L-tetromino: block size 100, gap 12 -->
+  <!-- Shape width: 2*100+12=212, height: 3*100+2*12=324 -->
+  <!-- Center at (600, 280): x_start=494, y_start=118 -->
+
+  <!-- col0 row0 -->
+  <rect x="494" y="118" width="100" height="100" rx="14" fill="url(#block)"/>
+  <rect x="494" y="118" width="100" height="50" rx="14" fill="url(#shine)"/>
+  <!-- col0 row1 -->
+  <rect x="494" y="230" width="100" height="100" rx="14" fill="url(#block)"/>
+  <rect x="494" y="230" width="100" height="50" rx="14" fill="url(#shine)"/>
+  <!-- col0 row2 -->
+  <rect x="494" y="342" width="100" height="100" rx="14" fill="url(#block)"/>
+  <rect x="494" y="342" width="100" height="50" rx="14" fill="url(#shine)"/>
+  <!-- col1 row2 -->
+  <rect x="606" y="342" width="100" height="100" rx="14" fill="url(#block)"/>
+  <rect x="606" y="342" width="100" height="50" rx="14" fill="url(#shine)"/>
+
+  <!-- LETTRIS title -->
+  <text x="600" y="510" font-family="'Arial Black', 'Arial', sans-serif" font-size="80" font-weight="900" letter-spacing="0.16em" text-anchor="middle" fill="#f2f2f2">LETTRIS</text>
+
+  <!-- Tagline -->
+  <text x="600" y="568" font-family="Arial, sans-serif" font-size="28" letter-spacing="0.08em" text-anchor="middle" fill="#863bff">A WORD FALLING GAME</text>
+</svg>
