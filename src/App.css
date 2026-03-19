@@ -72,6 +72,7 @@
 .board {
 	position: relative;
 	display: grid;
+	touch-action: manipulation;
 	grid-template-columns: repeat(6, 1fr);
 	gap: 4px;
 	padding: 4px;
