@@ -456,6 +456,10 @@ const moveDown = (state: GameState): GameState => {
 
 function App() {
 	const [game, setGame] = createSignal(createGame());
+	const [highScore, setHighScore] = createSignal(
+		Number(localStorage.getItem("highScore") ?? 0),
+	);
+	const [isNewHighScore, setIsNewHighScore] = createSignal(false);
 
 	onMount(() => {
 		let clearTimeout: number | undefined;
@@ -553,6 +557,17 @@ function App() {
 		});
 	});
 
+	createEffect(() => {
+		if (game().gameOver && game().score > 0) {
+			const isNew = game().score > highScore();
+			if (isNew) {
+				setHighScore(game().score);
+				localStorage.setItem("highScore", String(game().score));
+			}
+			setIsNewHighScore(isNew);
+		}
+	});
+
 	const visibleGrid = createMemo(() => {
 		const base = cloneGrid(game().grid);
 
@@ -596,7 +611,7 @@ function App() {
 				<div class="stats">
 					<span>{game().score}</span>
 					<span>{game().clears}</span>
-					<button onClick={() => setGame(createGame())} type="button">
+					<button onClick={() => { setIsNewHighScore(false); setGame(createGame()); }} type="button">
 						Reset
 					</button>
 				</div>
@@ -640,7 +655,17 @@ function App() {
 					)}
 				</For>
 				{game().paused && !game().gameOver && <div class="overlay">PAUSED</div>}
-			{game().gameOver && <div class="gameover">GAME OVER</div>}
+			{game().gameOver && (
+				<div class="gameover">
+					<span>GAME OVER</span>
+					<span class="gameover-score">{game().score}</span>
+					{isNewHighScore() ? (
+						<span class="gameover-hi">NEW HIGH SCORE</span>
+					) : (
+						<span class="gameover-hi">BEST {highScore()}</span>
+					)}
+				</div>
+			)}
 		</section>
 		</main>
 	);

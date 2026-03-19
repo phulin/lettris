@@ -153,8 +153,11 @@
 .gameover {
 	position: absolute;
 	inset: 0;
-	display: grid;
-	place-items: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
 	font-size: 1.8rem;
 	font-weight: 700;
 	letter-spacing: 0.18em;
@@ -162,6 +165,15 @@
 	color: #fff;
 	pointer-events: none;
 	z-index: 2;
+}
+
+.gameover-score {
+	font-size: 2.4rem;
+}
+
+.gameover-hi {
+	font-size: 1rem;
+	opacity: 0.75;
 }
 
 @keyframes clear-flash {
