@@ -26,7 +26,7 @@ const DICTIONARY = wordsText
 			/^[A-Z]+$/.test(word),
 	);
 const WORD_SET = new Set(DICTIONARY);
-const LETTER_BAG = "EEEEEEEEAAAARRRRIIIOOOTTNNNSSSLLDDGGBCMPFHKUVWY";
+const LETTER_BAG = "EEEEEEEEEAAAAARRRRIIIOOOTTNNNSSSLLDDGGBCMPFHKUVWY";
 const LETTERS = Array.from(new Set(LETTER_BAG)).sort();
 const LETTER_WEIGHTS = LETTER_BAG.split("").reduce<Record<string, number>>(
 	(counts, letter) => {
@@ -619,7 +619,13 @@ function App() {
 				<div class="stats">
 					<span>{game().score}</span>
 					<span>{game().clears}</span>
-					<button onClick={() => { setIsNewHighScore(false); setGame(createGame()); }} type="button">
+					<button
+						onClick={() => {
+							setIsNewHighScore(false);
+							setGame(createGame());
+						}}
+						type="button"
+					>
 						Reset
 					</button>
 				</div>
@@ -635,7 +641,9 @@ function App() {
 				aria-label="Lettris board"
 				onClick={(e) => {
 					const rect = e.currentTarget.getBoundingClientRect();
-					const col = Math.floor(((e.clientX - rect.left) / rect.width) * WIDTH);
+					const col = Math.floor(
+						((e.clientX - rect.left) / rect.width) * WIDTH,
+					);
 					tapColumn(Math.max(0, Math.min(WIDTH - 1, col)));
 				}}
 				onKeyDown={() => {}}
@@ -663,26 +671,26 @@ function App() {
 					)}
 				</For>
 				{game().paused && !game().gameOver && (
-				<button
-					class="overlay"
-					type="button"
-					onClick={() => setGame((c) => ({ ...c, paused: false }))}
-				>
-					PAUSED
-				</button>
-			)}
-			{game().gameOver && (
-				<div class="gameover">
-					<span>GAME OVER</span>
-					<span class="gameover-score">{game().score}</span>
-					{isNewHighScore() ? (
-						<span class="gameover-hi">NEW HIGH SCORE</span>
-					) : (
-						<span class="gameover-hi">BEST {highScore()}</span>
-					)}
-				</div>
-			)}
-		</section>
+					<button
+						class="overlay"
+						type="button"
+						onClick={() => setGame((c) => ({ ...c, paused: false }))}
+					>
+						PAUSED
+					</button>
+				)}
+				{game().gameOver && (
+					<div class="gameover">
+						<span>GAME OVER</span>
+						<span class="gameover-score">{game().score}</span>
+						{isNewHighScore() ? (
+							<span class="gameover-hi">NEW HIGH SCORE</span>
+						) : (
+							<span class="gameover-hi">BEST {highScore()}</span>
+						)}
+					</div>
+				)}
+			</section>
 		</main>
 	);
 }
