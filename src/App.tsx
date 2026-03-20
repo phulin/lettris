@@ -148,6 +148,24 @@ const spawnPiece = (
 	};
 };
 
+const GAME_STATE_KEY = "gameState";
+
+const saveGame = (state: GameState) => {
+	localStorage.setItem(GAME_STATE_KEY, JSON.stringify(state));
+};
+
+const loadGame = (): GameState | null => {
+	try {
+		const saved = localStorage.getItem(GAME_STATE_KEY);
+		if (!saved) return null;
+		const state = JSON.parse(saved) as GameState;
+		if (!state.gameOver) state.paused = true;
+		return state;
+	} catch {
+		return null;
+	}
+};
+
 const createGame = (): GameState => {
 	const grid = emptyGrid();
 	const initialCounts = emptyLetterCounts();
@@ -457,7 +475,7 @@ const moveDown = (state: GameState): GameState => {
 };
 
 function App() {
-	const [game, setGame] = createSignal(createGame());
+	const [game, setGame] = createSignal(loadGame() ?? createGame());
 	const [highScore, setHighScore] = createSignal(
 		Number(localStorage.getItem("highScore") ?? 0),
 	);
@@ -563,6 +581,10 @@ function App() {
 				window.clearTimeout(clearTimeout);
 			}
 		});
+	});
+
+	createEffect(() => {
+		saveGame(game());
 	});
 
 	createEffect(() => {
