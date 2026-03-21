@@ -11,11 +11,11 @@ import "./App.css";
 
 const WIDTH = 6;
 const HEIGHT = 10;
-const TICK_MS = 350;
+const TICK_MS = 600;
 const MIN_TICK_MS = 75;
-const ACCEL_MS = 5;
+const ACCEL_MS = 6;
 const CLEAR_MS = 420;
-const MIN_WORD_LENGTH = 3;
+const MIN_WORD_LENGTH = 4;
 const DICTIONARY = wordsText
 	.split("\n")
 	.map((word) => word.trim().toUpperCase())
@@ -26,19 +26,10 @@ const DICTIONARY = wordsText
 			/^[A-Z]+$/.test(word),
 	);
 const WORD_SET = new Set(DICTIONARY);
-const LETTER_BAG = "EEEEEEEEEAAAAARRRRIIIOOOTTNNNSSSLLDDGGBCMPFHKUVWY";
+const LETTER_BAG = "EEEEEEEEEAAAAAARRRRIIIIOOOTTNNNSSSLLDDGGBCMPFHKUVWY";
 const LETTERS = Array.from(new Set(LETTER_BAG)).sort();
-const LETTER_WEIGHTS = LETTER_BAG.split("").reduce<Record<string, number>>(
-	(counts, letter) => {
-		counts[letter] = (counts[letter] ?? 0) + 1;
-		return counts;
-	},
-	{},
-);
-const TOTAL_LETTER_WEIGHT = LETTER_BAG.length;
 
 type Cell = string | null;
-type LetterCounts = Record<string, number>;
 
 type ActivePiece = {
 	letter: string;
@@ -61,8 +52,7 @@ type GameState = {
 	grid: Cell[][];
 	active: ActivePiece | null;
 	queue: string[];
-	letterCounts: LetterCounts;
-	totalLettersSpawned: number;
+	bag: string[];
 	score: number;
 	clears: number;
 	lastClear: string;
@@ -74,67 +64,80 @@ type GameState = {
 const emptyGrid = () =>
 	Array.from({ length: HEIGHT }, () => Array<Cell>(WIDTH).fill(null));
 
-const emptyLetterCounts = (): LetterCounts =>
-	LETTERS.reduce<LetterCounts>((counts, letter) => {
-		counts[letter] = 0;
-		return counts;
-	}, {});
+const shuffleLetters = (letters: string[]) => {
+	const shuffled = [...letters];
 
-const pickBalancedLetter = (
-	letterCounts: LetterCounts,
-	totalLettersSpawned: number,
-) => {
-	const weightedOptions = LETTERS.map((letter) => {
-		const expectedCount =
-			(totalLettersSpawned * LETTER_WEIGHTS[letter]) / TOTAL_LETTER_WEIGHT;
-		const actualCount = letterCounts[letter] ?? 0;
-
-		return {
-			letter,
-			weight: Math.max(0.25, 3 * (expectedCount - actualCount) + 1),
-		};
-	});
-
-	const totalWeight = weightedOptions.reduce(
-		(sum, option) => sum + option.weight,
-		0,
-	);
-	let roll = Math.random() * totalWeight;
-
-	for (const option of weightedOptions) {
-		roll -= option.weight;
-		if (roll <= 0) {
-			return option.letter;
-		}
+	for (let i = shuffled.length - 1; i > 0; i -= 1) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
 	}
 
-	return weightedOptions[weightedOptions.length - 1].letter;
+	return shuffled;
+};
+
+const createShuffledBag = () => shuffleLetters(LETTER_BAG.split(""));
+
+const drawFromBag = (
+	bag: string[],
+): {
+	letter: string;
+	bag: string[];
+} => {
+	const nextBag = bag.length > 0 ? [...bag] : createShuffledBag();
+	const letter = nextBag.shift();
+
+	if (!letter) {
+		const refilledBag = createShuffledBag();
+		return {
+			letter: refilledBag[0],
+			bag: refilledBag.slice(1),
+		};
+	}
+
+	return {
+		letter,
+		bag: nextBag,
+	};
+};
+
+const fillQueueFromBag = (queue: string[], bag: string[], size: number) => {
+	const nextQueue = [...queue];
+	let nextBag = [...bag];
+
+	while (nextQueue.length < size) {
+		const draw = drawFromBag(nextBag);
+		nextQueue.push(draw.letter);
+		nextBag = draw.bag;
+	}
+
+	return {
+		queue: nextQueue,
+		bag: nextBag,
+	};
 };
 
 const spawnPiece = (
 	grid: Cell[][],
-	letterCounts: LetterCounts,
-	totalLettersSpawned: number,
 	queue: string[],
+	bag: string[],
 ): {
 	active: ActivePiece | null;
 	queue: string[];
-	letterCounts: LetterCounts;
-	totalLettersSpawned: number;
+	bag: string[];
 } => {
 	const col = Math.floor(WIDTH / 2);
 
 	if (grid[0][col] !== null) {
-		return { active: null, queue, letterCounts, totalLettersSpawned };
+		return { active: null, queue, bag };
 	}
 
-	const letter = queue[0];
-	const newLetter = pickBalancedLetter(letterCounts, totalLettersSpawned);
-	const nextQueue = [...queue.slice(1), newLetter];
-	const nextLetterCounts = {
-		...letterCounts,
-		[letter]: (letterCounts[letter] ?? 0) + 1,
-	};
+	const nextQueueState = fillQueueFromBag(queue, bag, 1);
+	const letter = nextQueueState.queue[0];
+	const refilledQueueState = fillQueueFromBag(
+		nextQueueState.queue.slice(1),
+		nextQueueState.bag,
+		3,
+	);
 
 	return {
 		active: {
@@ -142,9 +145,8 @@ const spawnPiece = (
 			row: 0,
 			col,
 		},
-		queue: nextQueue,
-		letterCounts: nextLetterCounts,
-		totalLettersSpawned: totalLettersSpawned + 1,
+		queue: refilledQueueState.queue,
+		bag: refilledQueueState.bag,
 	};
 };
 
@@ -158,9 +160,37 @@ const loadGame = (): GameState | null => {
 	try {
 		const saved = localStorage.getItem(GAME_STATE_KEY);
 		if (!saved) return null;
-		const state = JSON.parse(saved) as GameState;
+		const state = JSON.parse(saved) as Partial<GameState> & {
+			letterCounts?: Record<string, number>;
+			totalLettersSpawned?: number;
+		};
+		const queue = Array.isArray(state.queue)
+			? state.queue.filter((letter): letter is string =>
+					LETTERS.includes(letter),
+				)
+			: [];
+		const savedBag = Array.isArray(state.bag)
+			? state.bag.filter((letter): letter is string => LETTERS.includes(letter))
+			: [];
+		const queueState = fillQueueFromBag(
+			queue,
+			savedBag.length > 0 ? savedBag : createShuffledBag(),
+			3,
+		);
+		if (!state.grid || (!state.score && state.score !== 0)) return null;
 		if (!state.gameOver) state.paused = true;
-		return state;
+		return {
+			grid: state.grid,
+			active: state.active ?? null,
+			queue: queueState.queue,
+			bag: queueState.bag,
+			score: state.score,
+			clears: state.clears ?? 0,
+			lastClear: state.lastClear ?? "",
+			clearingMatches: state.clearingMatches ?? [],
+			paused: state.paused ?? true,
+			gameOver: state.gameOver ?? false,
+		};
 	} catch {
 		return null;
 	}
@@ -168,18 +198,18 @@ const loadGame = (): GameState | null => {
 
 const createGame = (): GameState => {
 	const grid = emptyGrid();
-	const initialCounts = emptyLetterCounts();
-	const initialQueue = Array.from({ length: 3 }, (_, i) =>
-		pickBalancedLetter(initialCounts, i),
+	const initialQueueState = fillQueueFromBag([], createShuffledBag(), 3);
+	const spawn = spawnPiece(
+		grid,
+		initialQueueState.queue,
+		initialQueueState.bag,
 	);
-	const spawn = spawnPiece(grid, initialCounts, 0, initialQueue);
 
 	return {
 		grid,
 		active: spawn.active,
 		queue: spawn.queue,
-		letterCounts: spawn.letterCounts,
-		totalLettersSpawned: spawn.totalLettersSpawned,
+		bag: spawn.bag,
 		score: 0,
 		clears: 0,
 		lastClear: "",
@@ -366,20 +396,14 @@ const queueMatches = (
 	matches: Match[],
 ): GameState => {
 	if (matches.length === 0) {
-		const spawn = spawnPiece(
-			grid,
-			state.letterCounts,
-			state.totalLettersSpawned,
-			state.queue,
-		);
+		const spawn = spawnPiece(grid, state.queue, state.bag);
 
 		return {
 			...state,
 			grid,
 			active: spawn.active,
 			queue: spawn.queue,
-			letterCounts: spawn.letterCounts,
-			totalLettersSpawned: spawn.totalLettersSpawned,
+			bag: spawn.bag,
 			clearingMatches: [],
 			gameOver: spawn.active === null,
 		};
